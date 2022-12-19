@@ -152,7 +152,7 @@ def load_data(dataset, time):
 
 # -------------------------------------------------------------------- #
 
-def to_netcdf(loc_out, dataset, lon, lat, sst, time, use_interp):
+def to_netcdf(loc_out, dataset, lon, lat, sst, time):
   # The inputs should be consistent with the following units.
   time_unit = "seconds since 1981-01-01 00:00:00"
   lat_unit  = "degrees_north"
@@ -175,9 +175,7 @@ def to_netcdf(loc_out, dataset, lon, lat, sst, time, use_interp):
   lat_out  = ncdf.createVariable("lat" , "f4", "lat")
   lon_out  = ncdf.createVariable("lon" , "f4", "lon")
   sst_out  = ncdf.createVariable("sst" , "f4", ("lat", "lon"))
-  
-  if use_interp == False:
-    msk_out  = ncdf.createVariable("msk" , "i4", ("lat", "lon"))
+  msk_out  = ncdf.createVariable("msk" , "i4", ("lat", "lon"))
 
   time_out[0]  = int(nc.date2num([time], time_unit))
   lat_out[:]   = lat[:]
@@ -215,6 +213,6 @@ for time in times:
   sst = interp(*np.indices(sst.shape))
 
   print("\tWriting to a new NetCDF file ...")
-  to_netcdf(loc_out, dataset, lon, lat, sst, time, use_interp)
+  to_netcdf(loc_out, dataset, lon, lat, sst, time)
 
 print("Finished.")

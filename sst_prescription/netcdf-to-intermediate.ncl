@@ -57,11 +57,8 @@ do i = 0, dimsizes(fils)-1
 
   ; Attach masking information to the intermediate file to provide higher resolution of land/sea mask.
   ; Refer to <https://forum.mmm.ucar.edu/threads/resolved-landsea-mask-best-practices.9032/>.
-  if (.not. use_interp) then
-    msk = ncdf->msk
-    wrf_wps_write_int("FILE:" + dataset, "SST_MASK", msk@units, "Land Sea Mask", msk, opt)
-  end if 
-
+  msk = ncdf->msk
+  wrf_wps_write_int("FILE:" + dataset, "SST_MASK", msk@units, "Land Sea Mask", msk, opt)
 end do
 
 system("mv " + "FILE:" + dataset + ":* " + loc_out)

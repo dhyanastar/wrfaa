@@ -37,7 +37,7 @@ to_draw_err = True
 
 # Visualization time.
 start_date = "2016-01-22 00:00"
-end_date   = "2016-01-22 00:00"
+end_date   = "2016-01-23 00:00"
 timedelta  = 24    # [hr]
 
 # Latitude/Longitude bounds for the image(s).
@@ -53,6 +53,14 @@ lon_bound = [120, 135]
 #     oisst-avhrr-v02r01.20210907.nc
 #     ...
 loc_sst = "."
+
+# Contour levels of SST and its error.
+cnlevels_sst = np.arange(0, 20+1, 1) + 273.15
+cnlevels_err = np.linspace(0, 1, 31)
+
+# Ticks of the label bars for each contour plot.
+ticks_sst = cnlevels_sst
+ticks_err = cnlevels_err
 
 # -------------------------------------------------------------------- #
 
@@ -173,8 +181,8 @@ def visualize_sst(lat, lon, sst, time, label_fig, label_fil):
   fig = plt.figure(dpi=200)
   ax = plt.axes(projection=ccrs.PlateCarree())
 
-  cont = ax.contourf(X, Y, sst, np.arange(9, 31+1, 1), transform=ccrs.PlateCarree(), cmap="coolwarm", extend="both")
-  cbar = fig.colorbar(cont, pad=0.02, shrink=0.6, ticks=np.arange(9, 31+2, 2))
+  cont = ax.contourf(X, Y, sst, cnlevels_sst, transform=ccrs.PlateCarree(), cmap="coolwarm", extend="both")
+  cbar = fig.colorbar(cont, pad=0.02, shrink=0.6, ticks=ticks_sst)
   cbar.ax.tick_params(labelsize=6)
   
   gl = ax.gridlines(draw_labels=True, x_inline=False, y_inline=False, color="black", linestyle="--", linewidth=0.5)
@@ -199,8 +207,8 @@ def visualize_err(lat, lon, err, time, label_fig, label_fil):
   fig = plt.figure(dpi=200)
   ax = plt.axes(projection=ccrs.PlateCarree())
 
-  cont = ax.contourf(X, Y, err, np.arange(0.0, 1.0+0.05, 0.05), transform=ccrs.PlateCarree(), cmap="brg", extend="max")
-  cbar = fig.colorbar(cont, pad=0.02, shrink=0.6, ticks=np.arange(0.0, 1.0+0.1, 0.1))
+  cont = ax.contourf(X, Y, err, cnlevels_err, transform=ccrs.PlateCarree(), cmap="brg", extend="max")
+  cbar = fig.colorbar(cont, pad=0.02, shrink=0.6, ticks=cnlevels_err)
   cbar.ax.tick_params(labelsize=6)
   
   gl = ax.gridlines(draw_labels=True, x_inline=False, y_inline=False, color="black", linestyle="--", linewidth=0.5)
