@@ -175,19 +175,16 @@ def to_netcdf(loc_out, dataset, lon, lat, sst, time):
   lat_out  = ncdf.createVariable("lat" , "f4", "lat")
   lon_out  = ncdf.createVariable("lon" , "f4", "lon")
   sst_out  = ncdf.createVariable("sst" , "f4", ("lat", "lon"))
-  msk_out  = ncdf.createVariable("msk" , "i4", ("lat", "lon"))
 
   time_out[0]  = int(nc.date2num([time], time_unit))
   lat_out[:]   = lat[:]
   lon_out[:]   = lon[:]
   sst_out[:,:] = sst[:,:]
-  msk_out[:,:] = np.isnan(sst)
 
   time_out.units = time_unit
   lat_out.units  = lat_unit
   lon_out.units  = lon_unit
   sst_out.units  = sst_unit
-  msk_out.units  = ""
 
   ncdf.close()
 
