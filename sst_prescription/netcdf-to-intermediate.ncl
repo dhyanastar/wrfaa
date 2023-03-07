@@ -7,7 +7,7 @@
 begin
 
 ; SST dataset.
-dataset = "OISST"
+dataset = "OSTIA"
 ; Available options:
 ;   1. OSTIA
 ;   2. OSTIAdiu
@@ -18,22 +18,23 @@ dataset = "OISST"
 ;   7. GHRSST_UKMO
 
 ; Location of the input files (interpolated NetCDF files).
-loc_in     = "./interp"
+loc_in     = "./extracted"
 ; Location of the output files (WRF intermediate files).
 loc_out    = "./interm"
 
 ;----------------------------------------------------------------------;
 
-fils = systemfunc("ls " + loc_in + "/" + dataset + "_*interp.nc | grep .nc")
+fils = systemfunc("ls " + loc_in + "/" + dataset + "_*.nc | grep .nc")
 
 do i = 0, dimsizes(fils)-1
   ; print("Processing " + fils(i) + " ..." + "")
   ncdf = addfile(fils(i), "r")
 
   time := ncdf->time
-  lat = ncdf->lat
-  lon = ncdf->lon
-  sst = ncdf->sst
+  lat   = ncdf->lat
+  lon   = ncdf->lon
+  sst   = ncdf->sst
+  msk   = ncdf->msk
 
   time := cd_calendar(time, -3)
   time := tostring(time)    ; YYYYMMDDHH
@@ -54,6 +55,7 @@ do i = 0, dimsizes(fils)-1
   opt@is_wind_earth_relative = False
 
   wrf_wps_write_int("FILE:" + dataset, "SST", sst@units, "Sea-Surface Temperature", sst, opt)
+  wrf_wps_write_int("FILE:" + dataset, "SST_MASK", sst@units, "Sea-Surface Mask", msk, opt)
 end do
 
 system("mv " + "FILE:" + dataset + ":* " + loc_out)

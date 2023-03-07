@@ -9,9 +9,10 @@ These scripts are designed to conduct preprocess sea surface temperature (SST) d
 1. Modify each script first to be consistent with your SST data.
 2. Execute the scripts as follows.
 ```tcsh
-python interp_sst.py
+python extract_sst.py
 ncl netcdf-to-intermediate.ncl
 ```
 3. Then, the WRF intermediate files will be generated in the location that you have assigned in the `netcdf-to-intermediate.ncl` script.
+4. Link the attached `METGRID.TBL.ARW.sst` to `WPS/metgrid/METGRIB.TBL`.
 
-Check the list of compatible SST data in `interp_sst.py` script. 
+Check the list of compatible SST data in `extract_sst.py` script. 

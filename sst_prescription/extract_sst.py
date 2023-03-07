@@ -1,14 +1,13 @@
-# interp_sst.py
+# extract_sst.py
 # Jeonghoe Kim <jeonghoekim.14@snu.ac.kr>
 #
-# This script conducts nearest interpolation or linear interpolation
-# to fill missing values in SST datasets.
-# It is noted that nearest interpolation method is preferred here.
+# This script extracts the SST fields that match with the predefined lat/lon
+# ranges. Any interpolation is conducted here. The interpolation will be conducted
+# in WPS metgrid program.
 #
 # Requirements:
 #   - Python 3.x
 #   - NumPy
-#   - SciPy
 #   - netCDF4
 
 import numpy as np
@@ -16,12 +15,10 @@ import netCDF4 as nc
 import datetime as pydt
 import glob
 
-from scipy.interpolate import NearestNDInterpolator, LinearNDInterpolator
-
 #----------------------------------------------------------------------#
 
 # SST dataset.
-dataset = "OISST"
+dataset = "OSTIA"
 # Available options:
 #   1. OSTIA
 #   2. OSTIAdiu
@@ -32,8 +29,8 @@ dataset = "OISST"
 #   7. GHRSST_UKMO
 
 # Latitude/Longitude bounds (Set them to cover the WRF domain reasonably).
-lat_bound = [30, 45]
-lon_bound = [120, 135]
+lat_bound = [20, 60]
+lon_bound = [100, 150]
 
 # WRF integration time.
 start_date = "2021-09-07 18:00"
@@ -47,10 +44,10 @@ end_date   = "2021-09-07 23:00"
 #     oisst-avhrr-v02r01.20160122.nc
 #     oisst-avhrr-v02r01.20210907.nc
 #     ...
-loc_sst = "."
+loc_sst = "../../../data"
 
 # Location of the interpolated NetCDF files.
-loc_out = "./interp"
+loc_out = "./extracted"
 
 #----------------------------------------------------------------------#
 
@@ -126,7 +123,8 @@ def load_data(dataset, time):
   lat = np.array(lat)
   lon = np.array(lon)
   sst = np.array(sst)
-  sst[sst < 0] = np.nan    # Set NaN value.
+  #sst[sst < 0] = np.nan    # Set NaN value.
+  sst[sst < 0] = 0
 
   # Convert W to E.
   if np.any(np.array(lon) > 180) & np.any(np.array(lon_bound) < 0):
@@ -148,11 +146,17 @@ def load_data(dataset, time):
   lon = lon[j1:j2+1]
   sst = sst[i1:i2+1, j1:j2+1]
 
-  return lon, lat, sst
+  # Define SST_MASK array.
+  #   1: That point is not an NaN value.
+  #   0: That point is an NaN value and should be masked.
+  msk = np.ones(sst.shape)
+  msk[sst == 0] = 0
+
+  return lon, lat, sst, msk
 
 # -------------------------------------------------------------------- #
 
-def to_netcdf(loc_out, dataset, lon, lat, sst, time):
+def to_netcdf(loc_out, dataset, lon, lat, sst, msk, time):
   # The inputs should be consistent with the following units.
   time_unit = "seconds since 1981-01-01 00:00:00"
   lat_unit  = "degrees_north"
@@ -163,7 +167,7 @@ def to_netcdf(loc_out, dataset, lon, lat, sst, time):
   nx = lon.size
   ny = lat.size
 
-  fil = "%s/%s_%s_interp.nc" % (loc_out, dataset, time.strftime("%Y%m%d_%H"))
+  fil = "%s/%s_%s_extracted.nc" % (loc_out, dataset, time.strftime("%Y%m%d_%H"))
 
   ncdf = nc.Dataset(fil, "w")
 
@@ -175,11 +179,13 @@ def to_netcdf(loc_out, dataset, lon, lat, sst, time):
   lat_out  = ncdf.createVariable("lat" , "f4", "lat")
   lon_out  = ncdf.createVariable("lon" , "f4", "lon")
   sst_out  = ncdf.createVariable("sst" , "f4", ("lat", "lon"))
+  msk_out  = ncdf.createVariable("msk" , "i4", ("lat", "lon"))
 
   time_out[0]  = int(nc.date2num([time], time_unit))
   lat_out[:]   = lat[:]
   lon_out[:]   = lon[:]
   sst_out[:,:] = sst[:,:]
+  msk_out[:,:] = msk[:,:]
 
   time_out.units = time_unit
   lat_out.units  = lat_unit
@@ -202,14 +208,9 @@ while time_now <= end_date:
 for time in times:
   print("Processing %s ..." % (time.strftime("%Y-%m-%d %H:00 ...")))
   print("\tLoading ...")
-  lon, lat, sst = load_data(dataset, time)
-  
-  print("\tConducting nearest interpolation ...")
-  mask = np.where(~np.isnan(sst))
-  interp = NearestNDInterpolator(np.transpose(mask), sst[mask])
-  sst = interp(*np.indices(sst.shape))
+  lon, lat, sst, msk = load_data(dataset, time)
 
   print("\tWriting to a new NetCDF file ...")
-  to_netcdf(loc_out, dataset, lon, lat, sst, time)
+  to_netcdf(loc_out, dataset, lon, lat, sst, msk, time)
 
 print("Finished.")
